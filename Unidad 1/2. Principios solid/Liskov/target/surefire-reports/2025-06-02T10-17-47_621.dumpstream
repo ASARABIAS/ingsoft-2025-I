@@ -1,0 +1,5 @@
+# Created at 2025-06-02T10:17:47.879
+Boot Manifest-JAR contains absolute paths in classpath 'G:\Mi unidad\Universidad Popular del Cesar\Especializacion Ingenieria de software - Unicesar\GitHub\2. Principios solid\Liskov\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
