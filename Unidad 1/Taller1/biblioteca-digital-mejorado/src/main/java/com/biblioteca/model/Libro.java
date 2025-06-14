@@ -1,11 +1,10 @@
 package com.biblioteca.model;
 
-import com.biblioteca.service.NotificacionService;
+import com.biblioteca.service.notificacion.NotificacionService;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "libros")

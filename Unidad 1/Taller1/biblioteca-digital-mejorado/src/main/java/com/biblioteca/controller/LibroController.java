@@ -1,12 +1,14 @@
 package com.biblioteca.controller;
 
 import com.biblioteca.model.Libro;
-import com.biblioteca.service.BibliotecaService;
 import com.biblioteca.dto.LibroDTO;
+import com.biblioteca.service.libro.LibroService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 @RestController
@@ -15,86 +17,42 @@ public class LibroController {
     private static final Logger logger = Logger.getLogger(LibroController.class.getName());
 
     @Autowired
-    private BibliotecaService bibliotecaService;
+    private LibroService libroService;
 
-    // VIOLACIÓN: Controller hace validación de negocio
     @PostMapping
-    public ResponseEntity<Libro> crearLibro(@RequestBody LibroDTO libroDTO) {
-        // Validación en controller (VIOLACIÓN SRP)
-        if (libroDTO.getTitulo() == null || libroDTO.getTitulo().trim().isEmpty()) {
-            logger.warning("Intento de crear libro sin título");
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> crearLibro(@RequestBody LibroDTO libroDTO) {
+        try {
+            var libroCreado = libroService.crearLibro(libroDTO);
+            return ResponseEntity.ok(libroCreado);
+        } catch (IllegalArgumentException ex) {
+            logger.warning("Error al crear libro: " + ex.getMessage());
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
-
-        if (libroDTO.getCopias() == null || libroDTO.getCopias() <= 0) {
-            logger.warning("Intento de crear libro con copias inválidas");
-            return ResponseEntity.badRequest().build();
-        }
-
-        // VIOLACIÓN DIP: Conversión manual DTO -> Entity
-        Libro libro = new Libro();
-        libro.setTitulo(libroDTO.getTitulo());
-        libro.setAutor(libroDTO.getAutor());
-        libro.setIsbn(libroDTO.getIsbn());
-        libro.setCategoria(libroDTO.getCategoria());
-        libro.setCopias(libroDTO.getCopias());
-
-        Libro libroCreado = bibliotecaService.crearLibro(libro);
-        return ResponseEntity.ok(libroCreado);
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<Libro>> buscarLibros(@RequestParam String criterio) {
-        // VIOLACIÓN: Controller maneja lógica de negocio
-        if (criterio == null || criterio.trim().length() < 3) {
-            logger.warning("Criterio de búsqueda muy corto: " + criterio);
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> buscarLibros(@RequestParam String criterio) {
+        try {
+            List<Libro> libros = libroService.buscarLibros(criterio);
+            return ResponseEntity.ok(libros);
+        } catch (IllegalArgumentException ex) {
+            logger.warning("Error al buscar libros: " + ex.getMessage());
+            return ResponseEntity.badRequest().body(ex.getMessage());
         }
-
-        List<Libro> libros = bibliotecaService.buscarLibros(criterio);
-        return ResponseEntity.ok().body(libros);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Libro> obtenerLibro(@PathVariable Long id) {
-        // VIOLACIÓN: No hay separación clara de responsabilidades
+    public ResponseEntity<?> obtenerLibro(@PathVariable Long id) {
         try {
-            // Simulación de obtención (falta implementar)
-            Libro libro = this.bibliotecaService.getLibro(id);
-            logger.info("Consultando libro con ID: " + libro.getTitulo());
-            return ResponseEntity.ok().body(libro);
-        } catch (Exception e) {
-            logger.severe("Error al obtener libro: " + e.getMessage());
-            return ResponseEntity.notFound().build();
+            var libro = libroService.getLibro(id);
+            logger.info("Consultando libro: " + libro.getTitulo());
+            return ResponseEntity.ok(libro);
+        } catch (NoSuchElementException ex) {
+            logger.warning("Libro no encontrado con ID: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (Exception ex) {
+            logger.severe("Error interno al obtener libro: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al procesar la solicitud");
         }
-    }
-
-    // VIOLACIÓN SRP: Controller genera reportes
-    @GetMapping("/{id}/reporte")
-    public ResponseEntity<String> generarReporteLibro(@PathVariable Long id) {
-
-        try {
-            // Lógica de reporte mezclada en controller // Lógica de reporte mezclada en controller
-            Libro libro = this.bibliotecaService.getLibro(id);
-            logger.info("Consultando libro con ID: " + libro.getTitulo());
-            StringBuilder reporte = new StringBuilder();
-            reporte.append("======= REPORTE DE LIBRO =======").append("<br>");
-            reporte.append("ID: ").append(id).append("<br>");
-            reporte.append("TITULO: ").append(libro.getTitulo()).append("<br>");
-            reporte.append("AUTOR: ").append(libro.getAutor()).append("<br>");
-            reporte.append("ISBN: ").append(libro.getIsbn()).append("<br>");
-            reporte.append("CATEGORIA: ").append(libro.getCategoria()).append("<br>");
-            reporte.append("COPIAS: ").append(libro.getCopias()).append("<br>");
-            reporte.append("================================").append("<br>");
-            return ResponseEntity.ok(reporte.toString());
-
-        } catch (Exception e) {
-            logger.severe("Error al obtener libro: " + e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
-
-
-
-
     }
 }

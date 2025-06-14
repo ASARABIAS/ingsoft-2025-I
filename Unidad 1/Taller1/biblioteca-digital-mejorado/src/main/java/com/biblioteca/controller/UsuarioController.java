@@ -1,7 +1,6 @@
 package com.biblioteca.controller;
 
 import com.biblioteca.model.Usuario;
-import com.biblioteca.service.BibliotecaService;
 import com.biblioteca.dto.UsuarioDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
